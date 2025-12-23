@@ -53,6 +53,49 @@ test_expect_success 'setup bare' '
 	git clone --bare . bare
 '
 
+test_expect_success '--onto with invalid commit-ish' '
+	cat >expect <<-EOF &&
+	fatal: ${SQ}refs/not-valid${SQ} is not a valid commit-ish
+	EOF
+	test_must_fail git replay --onto=refs/not-valid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--advance with invalid commit-ish' '
+	cat >expect <<-EOF &&
+	fatal: ${SQ}refs/not-valid${SQ} is not a valid commit-ish
+	EOF
+	test_must_fail git replay --advance=refs/not-valid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'option --onto or --advance is mandatory' '
+	cat >expect <<-\EOF &&
+	error: option --onto or --advance is mandatory
+	EOF
+	# First line is the error; rest is Usage
+	test_must_fail git replay topic1..topic2 >&1 2>&1 |
+		head -1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'no base or negative ref gives no-replaying down to root error' '
+	cat >expect <<-\EOF &&
+	fatal: replaying down to root commit is not supported yet!
+	EOF
+	test_must_fail git replay --onto=topic1 topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'options --advance and --contained cannot be used together' '
+	cat >expect <<-EOF &&
+	fatal: options ${SQ}--advance${SQ} and ${SQ}--contained${SQ} cannot be used together
+	EOF
+	test_must_fail git replay --advance=main --contained \
+		topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'using replay to rebase two branches, one on top of other' '
 	git replay --ref-action=print --onto main topic1..topic2 >result &&
 

@@ -32,7 +32,7 @@ static struct commit *peel_committish(struct repository *repo, const char *name)
 	struct object_id oid;
 
 	if (repo_get_oid(repo, name, &oid))
-		return NULL;
+		die(_("'%s' is not a valid commit-ish"), name);
 	obj = parse_object(repo, &oid);
 	return (struct commit *)repo_peel_to_type(repo, name, 0, obj,
 						  OBJ_COMMIT);
